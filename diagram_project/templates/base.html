@@ -5,10 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diagram Editor</title>
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
     <div class="flex flex-col h-screen">
+        {% csrf_token %}
         <div class="bg-gray-100 border-b border-gray-200 p-2 flex items-center">
             <input type="text" id="diagram-name" class="border border-gray-300 rounded px-2 py-1" placeholder="Diagram Name">
             <button id="save-button" class="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
