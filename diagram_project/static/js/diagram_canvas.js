@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let panOffset = { x: 0, y: 0 };
     let dragStart = { x: 0, y: 0 };
     let zoomLevel = 1;
+    let selectedElement = null;
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -36,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = element.style.fill;
         ctx.strokeStyle = element.style.stroke;
         ctx.lineWidth = element.style.strokeWidth;
+
+        if (element === selectedElement) {
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 4;
+        }
 
         switch (element.type) {
             case 'rectangle':
@@ -59,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedTool === 'pan') {
             isPanning = true;
             dragStart = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
+        } else if (selectedTool === 'select') {
+            selectedElement = canvasElements.find(el =>
+                x >= el.x && x <= el.x + el.width &&
+                y >= el.y && y <= el.y + el.height
+            );
+            draw();
         } else if (selectedTool === 'shape') {
             const newElement = {
                 id: Date.now(),
@@ -81,6 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousemove', (e) => {
         if (isPanning) {
             panOffset = { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y };
+            draw();
+        } else if (selectedTool === 'select' && selectedElement && e.buttons === 1) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / zoomLevel - panOffset.x;
+            const y = (e.clientY - rect.top) / zoomLevel - panOffset.y;
+            selectedElement.x = x - selectedElement.width / 2;
+            selectedElement.y = y - selectedElement.height / 2;
             draw();
         }
     });
@@ -108,10 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
             data: canvasElements
         };
 
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
         fetch('/api/save/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
             },
             body: JSON.stringify(diagramData),
         })
